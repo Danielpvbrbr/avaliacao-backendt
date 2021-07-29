@@ -8,22 +8,16 @@ const bodyParser = require('body-parser');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-// app.use(
-//     cors({
-//       origin: ["http://localhost:3000"],
-//       methods: ["GET", "POST", 'DELETE'],
-//       credentials: true,
-//     })
-//   );
+
 
 app.get('/', (req, res) => {
     res.send('Seja bem-vindo ao meu app!');
 });
 
 app.get('/api/dados/cap/:pisCap', (req, res) => {
-    const matricula = req.params.pisCap;
+    const pis = req.params.pisCap;
 
-    connection.query(`SELECT * FROM AFD_TB WHERE dado_user LIKE "%${matricula}%" `,
+    connection.query(`SELECT * FROM AFD_TB WHERE dado_user LIKE "%${pis}%" `,
         (err, result) => {
             if (err) {
                 console.log(err)
@@ -51,7 +45,7 @@ app.post('/api/registros', (req, res) => {
     const getPis = req.body.getPis;
     const getMat = req.body.getMat;
 
-    connection.query("INSERT INTO formularioTB (nome, pis, matricula) VALUES (?,?,?)", [getNome, getPis, getMat],
+    connection.query("INSERT IGNORE INTO formularioTB (nome, pis, matricula) VALUES (?,?,?)", [getNome, getPis, getMat],
         (err, result) => {
             if (err) {
                 console.log(err)
@@ -62,7 +56,7 @@ app.post('/api/registros', (req, res) => {
 });
 
 app.get("/api/auth/funcionarios", (req, res) => {
-    // const pis = req.params.Pis
+   
     connection.query(`SELECT * FROM formularioTB`,
         (err, result) => {
             if (err) {
@@ -87,6 +81,16 @@ app.get("/api/auth/p/:Pis", (req, res) => {
     });
 });
 
+app.delete("/api/auth/del/funcionarios/:id", (req, res) => {
+const id = req.params.id;
+    connection.query(`DELETE FROM formularioTB WHERE id = ${id}`, (err, result) => {
+        if (err) {
+            console.log(err);
+        } else {
+            res.send(result);
+        }
+    })
+})
 
 
 app.delete("/api/limparTb", (req, res) => {
