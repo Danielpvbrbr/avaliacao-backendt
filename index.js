@@ -8,19 +8,50 @@ const bodyParser = require('body-parser');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+// app.use(
+//     cors({
+//       origin: ["http://localhost:3000"],
+//       methods: ["GET", "POST", 'DELETE'],
+//       credentials: true,
+//     })
+//   );
 
 app.get('/', (req, res) => {
     res.send('Seja bem-vindo ao meu app!');
 });
 
-app.post('/api/cadastro', (req, res) => {
+app.get('/api/dados/cap/:pisCap', (req, res) => {
+    const matricula = req.params.pisCap;
+
+    connection.query(`SELECT * FROM AFD_TB WHERE dado_user LIKE "%${matricula}%" `,
+        (err, result) => {
+            if (err) {
+                console.log(err)
+            } else {
+                res.send(result)
+            }
+        })
+});
+
+app.post('/api/dados/:getDados', (req, res) => {
+    const dados = req.params.getDados;
+
+    connection.query("INSERT IGNORE INTO AFD_TB (dado_user) VALUES (?)", [dados],
+        (err, result) => {
+            if (err) {
+                console.log(err)
+            } else {
+                res.send(result)
+            }
+        })
+});
+
+app.post('/api/registros', (req, res) => {
     const getNome = req.body.getNome;
-    const getSobrenome = req.body.getSobrenome;
-    const getEmail = req.body.getEmail;
-    const getUsuario = req.body.getUsuario;
-    const getSenha = req.body.getSenha;
+    const getPis = req.body.getPis;
+    const getMat = req.body.getMat;
 
-    connection.query("INSERT INTO tble1 (nome, sobrenome, email, usuario, senha) VALUES (?,?,?,?,?)", [getNome, getSobrenome, getEmail, getUsuario, getSenha],
+    connection.query("INSERT INTO formularioTB (nome, pis, matricula) VALUES (?,?,?)", [getNome, getPis, getMat],
         (err, result) => {
             if (err) {
                 console.log(err)
@@ -30,12 +61,9 @@ app.post('/api/cadastro', (req, res) => {
         })
 });
 
-app.post('/api/form/:IdCockie/:getTitulo/:getCampo', (req, res) => {
-    const getTitulo = req.params.getTitulo;
-    const getCampo = req.params.getCampo;
-    const IdCockie = req.params.IdCockie;
-
-    connection.query("INSERT INTO tble2 (titulo, campoTexto, id_off) VALUES (?,?,?) ", [getTitulo,getCampo,IdCockie],
+app.get("/api/auth/funcionarios", (req, res) => {
+    // const pis = req.params.Pis
+    connection.query(`SELECT * FROM formularioTB`,
         (err, result) => {
             if (err) {
                 console.log(err)
@@ -45,49 +73,25 @@ app.post('/api/form/:IdCockie/:getTitulo/:getCampo', (req, res) => {
         })
 });
 
-app.put('/api/edit/:getId/:getTitulo/:getCampo', (req, res) => {
-    const getId = req.params.getId;
-    const getTitulo = req.params.getTitulo;
-    const getCampo = req.params.getCampo;
+app.get("/api/auth/p/:Pis", (req, res) => {
+    const pis = req.params.Pis
+    connection.query(`SELECT * FROM formularioTB WHERE pis = ${pis}`, (err, result, fields) => {
+        if (result) {
+            res.send(result)
+            // res.redirect('/auth/login');  
 
-    connection.query("UPDATE tble2 SET titulo = ?, campoTexto = ? WHERE id = ?", [ getTitulo, getCampo, getId ],
-        (err, result) => {
-            if (err) {
-                console.log(err)
-            } else {
-                res.send(result)
-            }
-        })
-});
-
-app.get("/api/list/:IdCockie", (req, res) => {
-    const IdCockie = req.params.IdCockie
-
-    connection.query(`SELECT tble2.id, tble1.usuario, tble1.senha, tble2.titulo, tble2.campoTexto FROM tble2 INNER JOIN tble1 ON tble1.id_on = id_off AND tble1.id_on = ${IdCockie}`, (err, result) => {
-        if (err) {
-            console.log(err);
         } else {
-            res.send(result);
+            res.send('Numero do pis incorreto, ou usuario não cadastrado na base de dados!');
         }
-    })
+        res.end();
+    });
 });
 
-app.get("/api/login/:User/:Pass", (req, res) => {
-        const User = req.params.User
-        const Pass = req.params.Pass
-        console.log(User,Pass)
-        connection.query(`SELECT * FROM tble1 WHERE usuario = ? && senha = ?`,[User,Pass] ,(err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.send(result);
-            }
-        })
-});
 
-app.delete("/api/delete/:id", (req, res) => {
-    const id = req.params.id;
-    connection.query(`DELETE FROM tble2 WHERE id = ${id}`, (err, result) => {
+
+app.delete("/api/limparTb", (req, res) => {
+
+    connection.query(`DELETE FROM AFD_TB`, (err, result) => {
         if (err) {
             console.log(err);
         } else {
@@ -96,16 +100,6 @@ app.delete("/api/delete/:id", (req, res) => {
     })
 })
 
-// app.delete("/api/delete/:id", (req, res) => {
-//     const id = req.params.id;
-//     connection.query(`DELETE tble1, tble2 FROM tble1 INNER JOIN tble2 ON tble2.id_off  = tble1.id_on WHERE id = ${id}`, (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         } else {
-//             res.send(result);
-//         }
-//     })
-// })
 
 app.listen(port, () => {
     console.log(`Servidor executando na porta ${port}`);
